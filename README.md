@@ -341,7 +341,7 @@ Se rendre dans le dossier "TP1/Ansible" : ~~Cloud-Computing\TP1\Ansible et éxec
 
 ```
 cd ~~Cloud-Computing\TP1\Ansible
-ansible-playbook -i hosts.ini playbooks/nginx.yml
+ansible-playbook -i hosts.ini Playbook/nginx.yml
 ```
 
 ## 3. Déploiement de MariaDB avec Ansible
@@ -350,7 +350,7 @@ Se rendre dans le dossier "TP1/Ansible" : ~~Cloud-Computing\TP1\Ansible et éxec
 
 ```
 cd ~~Cloud-Computing\TP1\Ansible
-ansible-playbook -i hosts.ini playbooks/mariadb.yml
+ansible-playbook -i hosts.ini Playbook/mariadb.yml
 ```
 
 ### Vérifier que la base de données tp1_db a été créé
