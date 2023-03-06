@@ -331,7 +331,7 @@ $ ansible-playbook -i hosts.ini first.yml
 Se rendre dans le dossier "TP1/Vagrant" : ~~Cloud-Computing\TP1\Vagrant
 
 ```
-cd ~~Cloud-Computing\TP1\Vagrant
+cd ~~b3-cloud-2023\tp1\vagrant
 vagrant up
 ```
 
