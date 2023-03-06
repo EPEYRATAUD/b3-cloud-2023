@@ -337,23 +337,23 @@ vagrant up
 
 ## 2. Déploiement du serveur web avec Ansible
 
-Se rendre dans le dossier "TP1/Ansible" : ~~Cloud-Computing\TP1\Ansible et éxecuter le playbook `nginx.yml`
+Se rendre dans le dossier "TP1/Ansible" :  éxecuter le playbook `nginx.yml`
 
 ```
-cd ~~Cloud-Computing\TP1\Ansible
+cd ~~b3-cloud-2023\tp1\ansible
 ansible-playbook -i hosts.ini Playbook/nginx.yml
 ```
 
 ## 3. Déploiement de MariaDB avec Ansible
 
-Se rendre dans le dossier "TP1/Ansible" : ~~Cloud-Computing\TP1\Ansible et éxecuter le playbook `mariadb.yml`
+Se rendre dans le dossier "tp1/Ansible" : éxecuter le playbook `mariadb.yml`
 
 ```
-cd ~~Cloud-Computing\TP1\Ansible
+cd ~~b3-cloud-2023\tp1\ansible
 ansible-playbook -i hosts.ini Playbook/mariadb.yml
 ```
 
-### Vérifier que la base de données tp1_db a été créé
+### Vérifier que la base de données tp1_database a été créé
 
 ```
 [ansible_user@secondmachine ~]$ mysql -u root -p -e "SHOW DATABASES;"
