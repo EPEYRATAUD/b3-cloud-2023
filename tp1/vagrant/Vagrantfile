@@ -1,0 +1,29 @@
+Vagrant.configure("2") do |config|
+  
+  # Configuration de la première machine virtuelle
+  config.vm.define "firstmachine" do |firstmachine|
+    firstmachine.vm.box = "generic/rocky9"
+    firstmachine.vm.hostname = "firstmachine"
+    firstmachine.vm.network "private_network", ip: "10.1.1.11"
+    firstmachine.vm.provider "virtualbox" do |vb|
+      vb.gui = true 
+      vb.name = "firstmachine"
+      vb.memory = "1024"
+    end
+    firstmachine.vm.provision "shell", path: "setup.sh"
+  end
+
+  # Configuration de la deuxième machine virtuelle
+  config.vm.define "secondmachine" do |secondmachine|
+    secondmachine.vm.box = "generic/rocky9"
+    secondmachine.vm.hostname = "secondmachine"
+    secondmachine.vm.network "private_network", ip: "10.1.1.12"
+    secondmachine.vm.provider "virtualbox" do |vb|
+      vb.gui = true
+      vb.name = "secondmachine"
+      vb.memory = "1024"
+    end
+    secondmachine.vm.provision "shell", path: "setup.sh"
+  end
+
+end
