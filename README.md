@@ -1,92 +1,416 @@
-# B3-Cloud
+# TP1 : Vagrant et Ansible
 
+Dans ce TP on va commencer à se f**amiliariser avec un environnement Vagrant + Ansible** qui nous permettra d'avoir un environnement dans lequel travailler par la suite.
 
+➜ _Vagrant_ nous permettra de gérer des VMs via des fichiers texte. Il sera ainsi aisé d'allumer plusieurs VMs, les conf, les détruire, et réitérer.
 
-## Getting started
+➜ _Ansible_ sera utilisé pour déposer de la configuration sur les machines que l'on aura préalablement créées.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+> Les deux sont des outils libres et opensource.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Sommaire
 
-## Add your files
+- [TP1 : Vagrant et Ansible](#tp1--vagrant-et-ansible)
+  - [Sommaire](#sommaire)
+- [0. Git](#0-git)
+- [I. Setup Vagrant](#i-setup-vagrant)
+  - [1. Une première VM](#1-une-première-vm)
+  - [2. Config initiale](#2-config-initiale)
+- [II. Ansible](#ii-ansible)
+  - [1. Mise en place](#1-mise-en-place)
+  - [2. La commande `ansible`](#2-la-commande-ansible)
+  - [3. Un premier playbook](#3-un-premier-playbook)
+  - [3. Création de nouveaux playbooks](#3-création-de-nouveaux-playbooks)
+    - [A. NGINX](#a-nginx)
+    - [B. MariaDB](#b-mariadb)
+- [III. Utilisation et vérifications](#iii-utilisation-et-vérifications)
+  - [1. Déploiement des VM avec Vagrant](#1-déploiement-des-vm-avec-vagrant)
+  - [2. Déploiement du serveur web avec Ansible](#2-déploiement-du-serveur-web-avec-ansible)
+  - [3. Déploiement de MariaDB avec Ansible](#3-déploiement-de-mariadb-avec-ansible)
+    - [Vérifier que la base de données tp1_db a été créé](#vérifier-que-la-base-de-données-tp1_db-a-été-créé)
+  - [Se connecter à la VM2 et vérifier que notre utilisateur a été créé :](#se-connecter-à-la-vm2-et-vérifier-que-notre-utilisateur-a-été-créé-)
+  - [Vérifier que l'utilisateur "tp1_dbuser" possède tous les privilèges d'administration :](#vérifier-que-lutilisateur-tp1_dbuser-possède-tous-les-privilèges-dadministration-)
+  - [Vérifier que l'utilisateur "root" possède tous les droits sur la base de données "tp1_db" :](#vérifier-que-lutilisateur-root-possède-tous-les-droits-sur-la-base-de-données-tp1_db-)
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+# 0. Git
+
+➜ **Créez dès maintenant un dépôt Git** sur la plateforme de votre choix (Gitlab, Github, etc.).
+
+Vous l'utiliserez pour travailler sur vos TPs et il fera office de rendu de TP.
+
+# I. Setup Vagrant
+
+## 1. Une première VM
+
+Pour utiliser Vagrant, cela se fait depuis le terminal. Ouvrez donc un terminal sur votre OS.
+
+Je vous recommande Git Bash si vous êtes sur Windows.
+
+> Dans ce TP, les machines virtuelles que nous créerons seront des Rocky Linux 9. C'est un OS libre et opensource, basé sur RHEL. L'accent est mis sur la sécurité et la robustesse avant tout au sein de ces OS.
+> ➜ **Préparons le terrain pour la première VM**
+
+```bash
+# déplacez-vous dans votre dépôt git
+$ cd /path/to/git/repo
+# créez un dossier pour ce tp, et un sous dossier vagrant
+$ mkdir -p tp1/vagrant
+$ cd tp1/vagrant
+# générez un fichier Vagrantfile initial
+$ vagrant init generic/rocky9
+# un fichier Vagrantfile a été créé dans le dossier courant
+# explorez son contenu
+$ cat Vagrantfile
+```
+
+Avec ce fichier basique, il est possible d'allumer une simple VM. On peut trouver en commentaire les lignes de conf nécessaires pour définir par exemple une adresse IP privée pour notre VM.
+
+Feu.
+
+```bash
+# on allume la VM
+$ vagrant up
+# voir le statut de la VM
+$ vagrant status
+# une fois terminé, on peut SSH vers notre VM facilement avec :
+$ vagrant ssh
+# si vous voulez voir les paramètres de la commande SSH effectuée par Vagrant vous pouvez utiliser
+$ vagrant ssh-config
+# enfin vous pouvez éteindre et détruire la VM avec
+$ vagrant halt
+$ vagrant destroy -f
+```
+
+> Vous pouvez aussi constater que la VM est allumée dans votre hyperviseur.
+
+## 2. Config initiale
+
+**Vagrant, en plus la création de VM, permet aussi de déposer de la configuration une fois que la VM est allumée.**
+
+Dans notre cas, c'est idéal pour installer le nécessaire afin de pouvoir bosser sur Ansible par la suite.
+
+Une fois une VM configurée, Vagrant permet aussi de créer une nouvelle box de base, quu'on pourra de nouvea instancier par la suite, qui contiendra nos modifications.
+
+**Concrètement, dans cette partie** :
+
+- on va allumer une VM avec Vagrant
+- demander à Vagrant d'exécuter un script une fois la VM allumée :
+  - mettre à jour l'OS
+  - installer Ansible
+- packager cette VM comme une nouvelle box
+
+Ainsi, par la suite, on pourra instancier de nouvelles VMs qui auront déjà Ansible installé.
+
+➜ **Modifiez votre `Vagrantfile`** pour qu'il ressemble à :
+
+```ruby
+Vagrant.configure("2") do |config|
+  config.vm.box = "generic/rocky9"
+  config.vm.provider "virtualbox" do |vb|
+    # Display the VirtualBox GUI when booting the machine
+    vb.gui = true
+
+    # Customize the amount of memory on the VM:
+    vb.memory = "1024"
+  end
+  # Désactive les updates auto qui peuvent ralentir le lancement de la machine
+  config.vm.box_check_update = false
+  # La ligne suivante permet de désactiver le montage d'un dossier partagé (ne marche pas tout le temps directement suivant vos OS, versions d'OS, etc.)
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  # Exécution d'un script au démarrage de la VM
+  config.vm.provision "shell", path: "setup.sh"
+end
+```
+
+➜ Créez, à côté du `Vagrantfile` **un fichier `setup.sh`** avec le contenu suivant :
+
+```bash
+# init script for Vagrant VMs
+# update OS
+dnf update -y
+# install ansible
+dnf install -y ansible
+# désactive SELinux
+setenforce 0
+sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
+```
+
+> Vous pourrez ajouter des éléments à ce script si nécessaire par la suite. C'est notre script d'initialisation de la machine.
+> ➜ **Vous pouvez `vagrant up`** pour dérouler l'install, avec l'exécution du script en plus.
+
+---
+
+➜ On va maintenant repackager cette VM en une nouvelle box, qui contiendra déjà notre update ainsi que l'installation de Ansible.
+
+```bash
+# toujours depuis le même répertoire, avec la VM allumée
+$ vagrant package --output rocky-ynov.box
+# on ajoute le fichier .box produit à la liste des box que gère Vagrant
+$ vagrant box add rocky-ynov rocky-ynov.box
+# la box est visible dans la liste des box Vagrant
+$ vagrant box list
+```
+
+# II. Ansible
+
+_Ansible_ sera notre outil de gestion de conf principal.
+
+➜ Pour qu'Ansible fonctionne il nous faut :
+
+- du code Ansible
+- des machines sur lesquelles déposer de la conf
+  - ce sera des machines Vagrant
+  - Ansible et Python installés
+  - un serveur SSH dispo
+- une machine qui possède le code Ansible
+  - ce sera votre PC
+  - cette machine doit pouvoir se connecter sur les machines de destination en SSH
+  - utilisation d'un utilisateur qui a accès aux droits `root` via la commande `sudo`
+
+Une fois en place, on pourra rédiger nos premiers _playbooks_.
+
+## 1. Mise en place
+
+➜ **Ajustez votre `Vagrantfile`** pour que
+
+- il crée 2 VMs
+- chacune doit avoir une adresse IP privée dans le réseau `10.1.1.0/24`
+  - une en `10.1.1.11` l'autre en `10.1.1.12`
+- modifiez le script `setup.sh` pour que les VMs créées :
+  - aient Ansible et Python installés
+  - aient un user qui a accès aux droits `root` avec la commande `sudo`
+    - je vous conseille une conf en `NOPASSWD` pour ne pas avoir à saisir votre password à chaque déploiement
+  - ce user a une clé publique pour vous y connecter sans mot de passe
+
+➜ **Installez Ansible sur votre machine**
+
+- il vous faudra aussi Python
+- suivez [la doc officielle pour l'install](https://docs.ansible.com/ansible/latest/installation_guide/index.html)
+
+➜ **Créez un nouveau répertoire `tp1/ansible/` dans votre dépôt git**
+
+- il accueillera le code Ansible pour ce TP
+
+➜ **Préparez la connexion Ansible aux VMs**
+
+- créez un fichier `.ssh-config` avec le contenu suivant
+
+```ssh-config
+Host 10.1.1.*
+  User <VOTRE_USER>
+  IdentityFile <VOTRE_CLE_PRIVEE>
+  UserKnownHostsFile /dev/null
+  StrictHostKeyChecking no
+  PasswordAuthentication no
+  IdentitiesOnly yes
+  LogLevel FATAL
+```
+
+- créez un fichier `ansible.cfg` avec le contenu suivant
+
+```ini
+[ssh_connection]
+ssh_args = -F ./.ssh-config
+```
+
+## 2. La commande `ansible`
+
+On va enfin utiliser un peu Ansible !
+
+➜ Pour cela, **créez un fichier `hosts.ini`** avec le contenu suivant :
+
+```ini
+[tp1]
+10.1.1.11
+10.1.1.12
+```
+
+On va commencer avec quelques commandes Ansible pour exécuter des tâches _ad-hoc_ : c'est à dire des tâches one shot depuis la ligne de commandes.
+
+```bash
+# lister les hôtes que Ansible voit dans notre inventaire
+$ ansible -i hosts.ini tp1 --list-hosts
+# tester si ansible est capable d'interagir avec les machines
+$ ansible -i hosts.ini tp1 -m ping
+# afficher toutes les infos que Ansible est capable de récupérer sur chaque machine
+$ ansible -i hosts.ini tp1 -m setup
+# exécuter une commande sur les machines distantes
+$ ansible -i hosts.ini tp1 -m command -a 'uptime'
+# exécuter une commande en root
+$ ansible -i hosts.ini tp1 --become -m command -a 'reboot'
+```
+
+## 3. Un premier playbook
+
+Enfin, on va écrire un peu de code Ansible.  
+On va commencer simple et faire un _playbook_ en un seul fichier, pour prendre la main sur la syntaxe, et faire un premier déploiement.
+
+➜ **créez un fichier `first.yml`**, notre premier _playbook_ :
+
+```yaml
+---
+- name: Install nginx
+  hosts: tp1
+  become: true
+  tasks:
+    - name: Install nginx
+      dnf:
+        name: nginx
+        state: present
+    - name: Insert Index Page
+      template:
+        src: index.html.j2
+        dest: /usr/share/nginx/html/index.html
+    - name: Start NGiNX
+      service:
+        name: nginx
+        state: started
+```
+
+> Chaque élément de cette liste YAML est donc une _task_ Ansible. Les mots-clés `yum`, `template`, `service` sont des _modules_ Ansible.
+> ➜ **Et un fichier `index.html.j2` dans le même dossier**
+
+```jinja2
+Hello from {{ ansible_default_ipv4.address }}
+```
+
+➜ **Exécutez le playbook**
+
+```bash
+$ ansible-playbook -i hosts.ini first.yml
+```
+
+## 3. Création de nouveaux playbooks
+
+### A. NGINX
+
+➜ **Créez un _playbook_ `nginx.yml`**
+
+- déploie un serveur NGINX
+- générer un certificat et une clé au préalable
+  - le certificat doit être déposé dans `/etc/pki/tls/certs`
+  - la clé doit être déposée dans `/etc/pki/tls/private`
+- créer une racine web et un index
+  - créez le dossier `/var/www/tp1_site/`
+  - créez un fichier à l'intérieur `index.html` avec un contenu de test
+- déploie une nouveau fichier de conf NGINX
+  - pour servir votre `index.html` en HTTPS (port 443)
+- ouvre le port 443/TCP dans le firewall
+
+➜ **Modifiez votre `hosts.ini`**
+
+- ajoutez une section `web`
+- elle ne contient que `10.1.1.11`
+
+➜ **Lancez votre playbook sur le groupe `web`**
+
+➜ **Vérifiez que vous accéder au site avec notre navigateur**
+
+> S'il y a besoin d'aide pour tout ça, si vous n'êtes pas du tout familier avec la conf NGINX, n'hésitez pas à faire appel à moi.
+
+### B. MariaDB
+
+➜ **Créez un _playbook_ `mariadb.yml`**
+
+- déploie un serveur MariaDB
+- créer un user SQL ainsi qu'une base de données sur laquelle il a tous les droits
+
+➜ **Modifiez votre `hosts.ini`**
+
+- ajoutez une section `db`
+- elle ne contient que `10.1.1.12`
+
+➜ **Lancez votre playbook sur le groupe `db`**
+
+➜ **Vérifiez en vous connectant à la base que votre conf a pris effet**
+
+# III. Utilisation et vérifications
+
+## 1. Déploiement des VM avec Vagrant
+
+Se rendre dans le dossier "TP1/Vagrant" : ~~Cloud-Computing\TP1\Vagrant
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/EPEYRATAUD/b3-cloud.git
-git branch -M main
-git push -uf origin main
+cd ~~Cloud-Computing\TP1\Vagrant
+vagrant up
 ```
 
-## Integrate with your tools
+## 2. Déploiement du serveur web avec Ansible
 
-- [ ] [Set up project integrations](https://gitlab.com/EPEYRATAUD/b3-cloud/-/settings/integrations)
+Se rendre dans le dossier "TP1/Ansible" : ~~Cloud-Computing\TP1\Ansible et éxecuter le playbook `nginx.yml`
 
-## Collaborate with your team
+```
+cd ~~Cloud-Computing\TP1\Ansible
+ansible-playbook -i hosts.ini playbooks/nginx.yml
+```
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+## 3. Déploiement de MariaDB avec Ansible
 
-## Test and Deploy
+Se rendre dans le dossier "TP1/Ansible" : ~~Cloud-Computing\TP1\Ansible et éxecuter le playbook `mariadb.yml`
 
-Use the built-in continuous integration in GitLab.
+```
+cd ~~Cloud-Computing\TP1\Ansible
+ansible-playbook -i hosts.ini playbooks/mariadb.yml
+```
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+### Vérifier que la base de données tp1_db a été créé
 
-***
+```
+[ansible_user@secondmachine ~]$ mysql -u root -p -e "SHOW DATABASES;"
+Enter password:
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| tp1_database       |
++--------------------+
+```
 
-# Editing this README
+Vérifier que notre utilisateur a été créé :
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+```
+[ansible_user@secondmachine ~]$ mysql -u root -p -e "SELECT User FROM mysql.user;"
+Enter password:
++-------------+
+| User        |
++-------------+
+| mariadb.sys |
+| mysql       |
+| root        |
+| tp1_dbuser  |
++-------------+
+```
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Vérifier que l'utilisateur "root" possède tous les privilèges d'administration :
 
-## Name
-Choose a self-explaining name for your project.
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+[ansible_user@secondmachine ~]$ mysql -u root -p -e "SHOW GRANTS FOR 'root'@'localhost';"
+Enter password:
++----------------------------------------------------------------------------------------------------------------------------------------+
+| Grants for root@localhost
+                                                         |
++----------------------------------------------------------------------------------------------------------------------------------------+
+| GRANT ALL PRIVILEGES ON *.* TO `root`@`localhost` IDENTIFIED BY PASSWORD '*81F5E21E35407D884A6CD4A731AEBFB6AF209E1B' WITH GRANT OPTION |
+| GRANT PROXY ON ''@'%' TO 'root'@'localhost' WITH GRANT OPTION
+                                                         |
++----------------------------------------------------------------------------------------------------------------------------------------+
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+Vérifier que l'utilisateur "tp1_dbuser" possède tous les droits sur la base de données "tp1_db" :
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+```
+[ansible_user@secondmachine ~]$  mysql -u root -p -e "SHOW GRANTS FOR 'tp1_dbuser'@'localhost';"
+Enter password:
++-------------------------------------------------------------------------------------------------------------------+
+| Grants for tp1_dbuser@localhost
+                                    |
++-------------------------------------------------------------------------------------------------------------------+
+[ansible_user@secondmachine ~]$
+| GRANT ALL PRIVILEGES ON `tp1_database`.* TO `tp1_dbuser`@`localhost`
+                                    |
++-------------------------------------------------------------------------------------------------------------------+
+```
