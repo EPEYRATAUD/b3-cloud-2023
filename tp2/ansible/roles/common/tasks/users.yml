@@ -1,0 +1,27 @@
+- name: créer le groupe si non existant
+  group:
+    name: admin
+    state: present
+
+- name: import users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    home: "{{ item.home }}"
+    group: "{{ item.group }}"
+    state: present
+    shell: "{{ item.shell }}"
+  with_items: "{{ users }}"
+  become:
+    true
+    # ceci permet de boucler sur la liste users
+    #generate_ssh_key: yes
+    #ssh_key_bits: 2048
+    #ssh_key_file: .ssh/id_rsa
+# - name: ajouter la clé ssh dans authorized_keys
+#  authorized_key:
+#    users: "{{ item.users }}"
+#    key: "{{ item.ssh_public_key }}"
+#    state: present
+#  with_items: "{{ users }}"
+#  become: true

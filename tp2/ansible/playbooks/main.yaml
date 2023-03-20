@@ -1,0 +1,14 @@
+- hosts: all
+  roles:
+    - common
+  become: true
+
+- hosts: webapp
+  roles:
+    - webapp
+  become: true
+
+- hosts: rproxy
+  roles:
+    - rproxy
+  become: true
