@@ -1,0 +1,23 @@
+#cloud-config
+users:
+  - name: toto
+    gecos: Super adminsys
+    primary_group: toto
+    groups: wheel
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: false
+    passwd: $6$2mI6dTd.4SDiCwnP$vQMAT/CbWGbDaK5l/WxlKH1Jaxvyvde.5SbGB9E5MK31E65TarDxc57ndTYHKmWYCJDCWGhHVoRiOdyflNQ4T0
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDYrb/iNaFzOZxpY62Y0o5/uiKB8jq6GUxHbre+qMOTC2x1vcyRm6+snPbwpcIcy5XrKRmU5FbPpqjVryPXM/tGfsA4b4n5JoHhrEvHPkMQI5kMagyqjw/PSGvy3/0ers1rJUxwf2S5halFml4y56yynm53HfXPCcAMsIlD4R0WcgkttSViycioCmvHc3yzcY5ymw4GsTUjOyrZUbnAPjphRnoliGBfYnYJVPnOhWVZSRPanpuMjjWaw2VILlTO6FA+Dp4KiUFEx4eNcim9iU+llNrJTsFd4LvEyk24QQKYufSQl6aiAc2Z1pU0U++PO4i1hg0AXyFk9pA4vSKd4l+jrymZpJVWnTfAuet3RQUhVrzHHhTZZI6z8WBpg0xORMxhBf6UanST3n6/lNfgAkqyevNP4Mlne7Sx1gB+lWZmLRPNuu72jCALVLWgMIPhm33KtnhYgoT3OnGERMKjgmDl3zURl351YRrXjPiEDpvrb2YO9zNy9k72h1rCLZyOvb0= lucas@LAPTOP-JHK9K6A7
+
+  - name: vagrant
+    gecos: Super adminsys
+    primary_group: vagrant
+    groups: wheel
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: false
+    passwd: $6$Qz6T2PJTNUhU3rjb$.S0Cfnik0z/hLT23WLX.hUW1AberJIkqfDZJzVfKjZRIDO0Tnk5rfg3AcMd0a0JZa47AL2eLVl8WN4SceZVf5.
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key
