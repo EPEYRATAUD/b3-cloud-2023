@@ -33,7 +33,7 @@ Ci-dessous les VM crées lors du TP ( y compris la première se nommant **CLOUD*
 
 📁 Fichier **tp4/partie_1/main.tf`**
 
-[https://tonlienmescouilles](https://github.com/EPEYRATAUD/b3-cloud-2023/blob/main/tp4/partie_1/main.tf)
+[https://github.com/EPEYRATAUD/b3-cloud-2023/blob/main/tp4/partie_1/main.tf](https://github.com/EPEYRATAUD/b3-cloud-2023/blob/main/tp4/partie_1/main.tf)
 
 - _Récupération du provider azurerm :_
 
@@ -344,7 +344,7 @@ CLOUD   CLOUD            eastus
 
 📁 Fichier **tp4/partie_2/main.tf`**
 
-[https://tonlienmescouilles](https://github.com/EPEYRATAUD/b3-cloud-2023/blob/main/tp4/partie%202/plan_2.tf)
+[[https://tonlienmescouilles](https://github.com/EPEYRATAUD/b3-cloud-2023/blob/main/tp4/partie%202/plan_2.tf)](https://github.com/EPEYRATAUD/b3-cloud-2023/blob/main/tp4/partie%202/plan_2.tf)
 
 - _Récupération du provider azurerm :_
 
