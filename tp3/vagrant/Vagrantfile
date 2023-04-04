@@ -1,6 +1,14 @@
+# Créer un nouveau répertoire de travail
+$ mkdir vagrant
+$ cd vagrant
+
+# Initialiser un nouveau Vagrantfile
+$ vagrant init rocky9-cloud
+
+# Editer le Vagrantfile pour qu'il ressemble à :
+$ cat Vagrantfile
 Vagrant.configure("2") do |config|
   config.vm.box = "rocky9-cloud"
-  config.vm.boot_timeout = 600 # définir ici la valeur en secondes
   # On désactive la synchro automatique du dossier courant, pour que ça marche, il faut les Guest Additions
   config.vm.synced_folder '.', '/vagrant', disabled: true
 
